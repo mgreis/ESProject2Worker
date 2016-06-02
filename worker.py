@@ -45,19 +45,23 @@ def delete_boto3(url):
     s3.Object('eu-west-1-mgreis-es-instance1', url).delete()
 
 def delete_job(job_id):
-    answer = sdb.select(SelectExpression="select * from ES2016")
-    string = []
-    string = answer.get("Items")[0].get("Attributes")
+    while True:
+        answer = sdb.select(SelectExpression="select * from ES2016")
+        string = []
 
-    string2 = ""
-    for i in string:
+        if "Items" in answer:
+            string = answer.get("Items")[0].get("Attributes")
+            string2 = ""
+            for i in string:
 
-        if str(i.get('Name')) == job_id:
-            string2 = str(i.get('Value'))
+                if str(i.get('Name')) == job_id:
+                    string2 = str(i.get('Value'))
+
+            sdb.delete_attributes(DomainName="ES2016", ItemName='jobs',
+                                  Attributes=[{'Name': job_id, 'Value': string2}])
+            return
 
 
-    sdb.delete_attributes(DomainName="ES2016", ItemName='jobs',
-                                        Attributes=[{'Name': job_id, 'Value': string2}])
 
 
 
@@ -144,18 +148,20 @@ while True:
 
 
     if  message_body is not None:
-        print(message_body.get('job_file'))
-        print(message_body.get('job_id'))
+        print("Job file:      "+message_body.get('job_file'))
+        print("Job id:        "+message_body.get('job_id'))
         database = get_sdb(message_body.get('job_id'))
         if database is not None:
-            print (database.get('job_id'))
+            #print (database.get('job_id'))
             random_string = get_file_contents(database.get('job_file'))
-            print (random_string)
+            print ("Random String: " +random_string)
             if random_string is not None:
                 delete_job(message_body.get('job_id'))
                 start_time = post_sdb_started(message_body.get('job_id'), message_body.get('job_file'))
                 answer = find_proof_of_work(random_string, 5)
                 delete_boto3(database.get('job_file'))
+                print ("")
+                print ("Answer")
                 print('random: ' + random_string)
                 print('answer: ' + answer)
                 print('hash:   ' + hash_it(random_string, answer))
