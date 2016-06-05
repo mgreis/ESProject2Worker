@@ -161,7 +161,7 @@ while True:
                 answer = find_proof_of_work(random_string, 5)
                 delete_boto3(database.get('job_file'))
                 print ("")
-                print ("Answer")
+                print ("Answerff")
                 print('random: ' + random_string)
                 print('answer: ' + answer)
                 print('hash:   ' + hash_it(random_string, answer))
